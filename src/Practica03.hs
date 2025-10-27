@@ -50,7 +50,6 @@ variables (Or p q) =  eliminarDuplicados (variables p ++ variables q)
 variables (Impl p q) = eliminarDuplicados (variables p ++ variables q)
 variables (Syss p q) =  eliminarDuplicados (variables p ++ variables q)
 
-
 -- Ejercicio 2
 --Evalua una forma proposicional dependiendo del estado dado
 --(Si esta en la lista lo toma como true, si no como false)
@@ -61,12 +60,6 @@ interpretacion (And p q) e = interpretacion p e && interpretacion q e
 interpretacion (Or p q) e = interpretacion p e || interpretacion q e
 interpretacion (Impl p q) e = not (interpretacion p e) || interpretacion q e
 interpretacion (Syss p q) e = interpretacion p e == interpretacion q e
-
---Funcion conjuntoPotencia
---usado en el ejercicio 3
-conjuntoPotencia :: [a] -> [[a]]
-conjuntoPotencia [] = [[]]
-conjuntoPotencia (x:xs) = [(x:ys) | ys <- conjuntoPotencia xs] ++ (conjuntoPotencia xs)
 
 -- Ejercicio 3
 --Genera todos los estados posibles para una formula proposicional (verdaderos y falsos)
