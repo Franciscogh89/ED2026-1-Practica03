@@ -34,17 +34,44 @@ u = Var "u"
 -- Sinonimo para los estados
 type Estado = [String]
 
+--Funcion para eliminar duplicados (de una lista)
+--usado en el ejercicio 1
+eliminarDuplicados :: Eq a => [a] -> [a]
+eliminarDuplicados [] = []
+eliminarDuplicados (x:xs) = if x `elem` xs then eliminarDuplicados xs else x : eliminarDuplicados xs
+
 -- Ejercicio 1
+--Obtiene las variables de una formula proposicional sin duplicados
 variables :: Prop -> [String]
-variables = undefined
+variables (Var p) =  [p]
+variables (Not p) = variables p
+variables (And p q) = eliminarDuplicados (variables p ++ variables q)
+variables (Or p q) =  eliminarDuplicados (variables p ++ variables q)
+variables (Impl p q) = eliminarDuplicados (variables p ++ variables q)
+variables (Syss p q) =  eliminarDuplicados (variables p ++ variables q)
+
 
 -- Ejercicio 2
+--Evalua una forma proposicional dependiendo del estado dado
+--(Si esta en la lista lo toma como true, si no como false)
 interpretacion :: Prop -> Estado -> Bool
-interpretacion = undefined
+interpretacion (Var p) e = if p `elem` e then True else False
+interpretacion (Not p) e = not (interpretacion p e)
+interpretacion (And p q) e = interpretacion p e && interpretacion q e
+interpretacion (Or p q) e = interpretacion p e || interpretacion q e
+interpretacion (Impl p q) e = not (interpretacion p e) || interpretacion q e
+interpretacion (Syss p q) e = interpretacion p e == interpretacion q e
+
+--Funcion conjuntoPotencia
+--usado en el ejercicio 3
+conjuntoPotencia :: [a] -> [[a]]
+conjuntoPotencia [] = [[]]
+conjuntoPotencia (x:xs) = [(x:ys) | ys <- conjuntoPotencia xs] ++ (conjuntoPotencia xs)
 
 -- Ejercicio 3
+--Genera todos los estados posibles para una formula proposicional (verdaderos y falsos)
 estadosPosibles :: Prop -> [Estado]
-estadosPosibles = undefined
+estadosPosibles prop = conjuntoPotencia (variables prop)
 
 -- Ejercicio 4
 modelos :: Prop -> [Estado]
