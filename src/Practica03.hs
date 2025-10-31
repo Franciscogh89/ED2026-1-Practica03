@@ -34,11 +34,19 @@ u = Var "u"
 -- Sinonimo para los estados
 type Estado = [String]
 
+--Funcion para ver que en elemnto este en la lisla
+--usado en eliminarDuplicados (ejercicio 1)
+--usado en interpretacion
+contiene :: Eq a => a -> [a] -> Bool
+contiene _ []  = False
+contiene y (x:xs) = if x == y then True else contiene y xs
+
+
 --Funcion para eliminar duplicados (de una lista)
 --usado en el ejercicio 1
 eliminarDuplicados :: Eq a => [a] -> [a]
 eliminarDuplicados [] = []
-eliminarDuplicados (x:xs) = if x `elem` xs then eliminarDuplicados xs else x : eliminarDuplicados xs
+eliminarDuplicados (x:xs)= if contiene x xs then eliminarDuplicados xs else x : eliminarDuplicados xs
 
 -- Ejercicio 1
 --Obtiene las variables de una formula proposicional sin duplicados
@@ -54,7 +62,7 @@ variables (Syss p q) =  eliminarDuplicados (variables p ++ variables q)
 --Evalua una forma proposicional dependiendo del estado dado
 --(Si esta en la lista lo toma como true, si no como false)
 interpretacion :: Prop -> Estado -> Bool
-interpretacion (Var p) e = if p `elem` e then True else False
+interpretacion (Var p) e = if contiene p e then True else False
 interpretacion (Not p) e = not (interpretacion p e)
 interpretacion (And p q) e = interpretacion p e && interpretacion q e
 interpretacion (Or p q) e = interpretacion p e || interpretacion q e
