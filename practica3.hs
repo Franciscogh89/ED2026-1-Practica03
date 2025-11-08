@@ -1,5 +1,4 @@
 module LabDis where
-
 -- Sintaxis de la lógica proposicional
 data Prop = Var String | Cons Bool | Not Prop
             | And Prop Prop | Or Prop Prop
@@ -26,61 +25,96 @@ s = Var "s"
 t = Var "t"
 u = Var "u"
 
--- Tipo para representar una asignación de valores de verdad (modelo)
-type Modelo = [String]
+-- Tipo para representar un estado (asignación de valores de verdad)
+type Estado = [String]
+type Modelo = Estado
 
 -- ============================================================
--- FUNCIONES AUXILIARES
+-- FUNCIONES AUXILIARES (ya existentes)
 -- ============================================================
 
--- Eliminar duplicados de una lista
-nub :: Eq a => [a] -> [a]
-nub [] = []
-nub (x:xs) = x : nub (filter (/= x) xs)
+-- Función para ver que un elemento esté en la lista
+-- usado en eliminarDuplicados (ejercicio 1)
+-- usado en interpretacion
+contiene :: Eq a => a -> [a] -> Bool
+contiene _ []  = False
+contiene y (x:xs) = if x == y then True else contiene y xs
 
--- Obtener todas las variables de una fórmula
+-- Función para eliminar duplicados (de una lista)
+-- usado en el ejercicio 1
+eliminarDuplicados :: Eq a => [a] -> [a]
+eliminarDuplicados [] = []
+eliminarDuplicados (x:xs)= if contiene x xs then eliminarDuplicados xs else x : eliminarDuplicados xs
+
+-- Ejercicio 1
+-- Obtiene las variables de una fórmula proposicional sin duplicados
 variables :: Prop -> [String]
-variables (Var x) = [x]
 variables (Cons _) = []
-variables (Not f) = variables f
-variables (And f1 f2) = variables f1 ++ variables f2
-variables (Or f1 f2) = variables f1 ++ variables f2
-variables (Impl f1 f2) = variables f1 ++ variables f2
-variables (Syss f1 f2) = variables f1 ++ variables f2
+variables (Var p) =  [p]
+variables (Not p) = variables p
+variables (And p q) = eliminarDuplicados (variables p ++ variables q)
+variables (Or p q) =  eliminarDuplicados (variables p ++ variables q)
+variables (Impl p q) = eliminarDuplicados (variables p ++ variables q)
+variables (Syss p q) =  eliminarDuplicados (variables p ++ variables q)
 
--- Generar todos los posibles modelos (subconjuntos de variables)
-todosLosModelos :: [String] -> [Modelo]
-todosLosModelos [] = [[]]
-todosLosModelos (v:vs) = [modelo | modelo <- todosLosModelos vs] ++ 
-                         [v:modelo | modelo <- todosLosModelos vs]
+-- Ejercicio 2
+-- Evalúa una forma proposicional dependiendo del estado dado
+-- (Si está en la lista lo toma como true, si no como false)
+interpretacion :: Prop -> Estado -> Bool
+interpretacion (Cons b) _ = b
+interpretacion (Var p) e = if contiene p e then True else False
+interpretacion (Not p) e = not (interpretacion p e)
+interpretacion (And p q) e = interpretacion p e && interpretacion q e
+interpretacion (Or p q) e = interpretacion p e || interpretacion q e
+interpretacion (Impl p q) e = not (interpretacion p e) || interpretacion q e
+interpretacion (Syss p q) e = interpretacion p e == interpretacion q e
 
--- Evaluar una fórmula dado un modelo
-evaluar :: Prop -> Modelo -> Bool
-evaluar (Var x) modelo = x `elem` modelo
-evaluar (Cons b) _ = b
-evaluar (Not f) modelo = not (evaluar f modelo)
-evaluar (And f1 f2) modelo = evaluar f1 modelo && evaluar f2 modelo
-evaluar (Or f1 f2) modelo = evaluar f1 modelo || evaluar f2 modelo
-evaluar (Impl f1 f2) modelo = not (evaluar f1 modelo) || evaluar f2 modelo
-evaluar (Syss f1 f2) modelo = evaluar f1 modelo == evaluar f2 modelo
+-- Función filter: filtra elementos de una lista que cumplen una condición
+filtrar :: (a -> Bool) -> [a] -> [a]
+filtrar _ [] = []
+filtrar condicion (x:xs) = if condicion x 
+                           then x : filtrar condicion xs
+                           else filtrar condicion xs
+
+-- Función map: aplica una función a cada elemento de una lista
+mapear :: (a -> b) -> [a] -> [b]
+mapear _ [] = []
+mapear f (x:xs) = f x : mapear f xs
+
+-- Función all: verifica que todos los elementos cumplan una condición
+todos :: (a -> Bool) -> [a] -> Bool
+todos _ [] = True
+todos condicion (x:xs) = condicion x && todos condicion xs
+
+-- Función auxiliar para generar el conjunto potencia (todos los subconjuntos)
+conjuntoPotencia :: [a] -> [[a]]
+conjuntoPotencia [] = [[]]
+conjuntoPotencia (x:xs) = conjuntoPotencia xs ++ mapear (x:) (conjuntoPotencia xs)
+
+-- Ejercicio 3
+-- Genera todos los estados posibles para una fórmula proposicional (verdaderos y falsos)
+estadosPosibles :: Prop -> [Estado]
+estadosPosibles prop = conjuntoPotencia (variables prop)
 
 -- ============================================================
 -- FUNCIONES PRINCIPALES
 -- ============================================================
 
+-- Ejercicio 4
 -- Obtener todos los modelos que satisfacen una fórmula
 modelos :: Prop -> [Modelo]
-modelos formula = filter (evaluar formula) (todosLosModelos vars)
-  where vars = nub (variables formula)
+modelos prop = filtrar (\estado -> interpretacion prop estado) (estadosPosibles prop)
 
+-- Ejercicio 5
 -- Verificar si dos fórmulas son equivalentes
 sonEquivalentes :: Prop -> Prop -> Bool
-sonEquivalentes f1 f2 = modelosOrdenados f1 == modelosOrdenados f2
+sonEquivalentes phi1 phi2 = todosIguales
   where
     -- Obtener todas las variables de ambas fórmulas
-    todasVars = nub (variables f1 ++ variables f2)
-    -- Generar todos los posibles modelos
-    todosModelos = todosLosModelos todasVars
-    -- Filtrar modelos que satisfacen cada fórmula
-    modelosOrdenados f = filter (evaluar f) todosModelos
+    todasVars = eliminarDuplicados (variables phi1 ++ variables phi2)
+    -- Generar todos los estados posibles con esas variables
+    todosEstados = conjuntoPotencia todasVars
+    -- Verificar que ambas fórmulas tengan el mismo valor en todos los estados
+    todosIguales = todos (\e -> interpretacion phi1 e == interpretacion phi2 e) todosEstados
+
 
