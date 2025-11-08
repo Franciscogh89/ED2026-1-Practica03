@@ -137,6 +137,7 @@ todos condicion (x:xs) = condicion x && todos condicion xs
 -- Ejercicio 4 usada en Ejercicio 6
 
 -- NumElem
+-- Regresa la cantidad de elementos de una lista
 -- Usada en tautologia (Ejercicio 6)
 numElem:: [a] -> Int
 numElem [] = 0
